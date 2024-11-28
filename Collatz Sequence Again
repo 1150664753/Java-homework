@@ -1,0 +1,49 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+import static java.lang.Math.*;
+public class Main {
+    private static final int MAXLEN = (int) pow(2, 25);
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int[] arr = new int[MAXLEN];
+        arr[0] = 0;
+        arr[1] = 1;
+        int T = sc.nextInt();
+        while (T-- > 0) {
+            int i = sc.nextInt();
+            int j = sc.nextInt();
+            int temp;
+            int a=min(j,i);
+            int b=max(i,j);
+            int Maxcount = 1;
+            for (int k = a; k <= b; k++) {
+                temp = fun(k, arr);
+                if (temp > Maxcount) {
+                    Maxcount = temp;
+                }
+            }
+            System.out.println(i + " " + j + " " + Maxcount);
+        }
+    }
+    public static int fun(long n, int[] arr) {
+        long N = n;
+        long temp;
+        int count = 0;
+        while (true) {
+            if (N < MAXLEN && arr[(int) N] != 0) {
+                return arr[(int) N];
+            }
+            temp = N;
+            if (N % 2 == 0) {
+                N /= 2;
+            } else {
+                N = N * 3 + 1;
+            }
+            count++;
+            if (N < MAXLEN && temp < MAXLEN) {
+                arr[(int) temp] = fun(N, arr) + count;
+                return arr[(int) temp];
+            }
+        }
+    }
+}
