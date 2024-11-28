@@ -1,0 +1,249 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+import java.text.NumberFormat;
+import java.util.*;
+public class Main {
+    public static void main(String[] args) {
+        Bank bank = Bank.getBank();
+        Customer customer;
+        int curCustomer = 0;
+        Scanner s = new Scanner(System.in);
+        int t = s.nextInt();
+        s.nextLine();
+        // Create several customers and their accounts according to data
+        while (t-- > 0) {
+            String f = s.next();
+            String l = s.next();
+            s.nextLine();
+            bank.addCustomer(f, l);
+            customer = bank.getCustomer(curCustomer++);
+            int numAccount = s.nextInt();
+            s.nextLine();
+            while (numAccount-- > 0) {
+                String[] type = s.nextLine().split(" ");
+                double balance;
+                double interesOrProtect;
+                if (type[0].trim().toUpperCase().equals("C")) {
+                    balance = Double.parseDouble(type[1]);
+                    if (type.length == 3) {
+                        interesOrProtect = Double.parseDouble(type[2]);
+                        customer.addAccount(new CheckingAccount(balance,
+                                interesOrProtect));
+                    } else {
+                        customer.addAccount(new CheckingAccount(balance));
+                    }
+                } else if (type[0].trim().toUpperCase().equals("S")) {
+                    balance = Double.parseDouble(type[1]);
+                    interesOrProtect = Double.parseDouble(type[2]);
+                    customer.addAccount(new SavingsAccount(balance,
+                            interesOrProtect));
+                }
+            }
+        }
+        int nOPs = s.nextInt();
+        s.nextLine();
+        while (nOPs-- > 0) {
+            String[] sOP = s.nextLine().split(" ");
+            char op = sOP[0].charAt(0);
+            int customerIndex = Integer.parseInt(sOP[1]);
+            int accountIndex = Integer.parseInt(sOP[2]);
+            double amount = Double.parseDouble(sOP[3]);
+            switch (op) {
+                case 'w':
+                case 'W':
+                    customer = bank.getCustomer(customerIndex);
+                    try{
+                        customer.getAccount(accountIndex).withdraw(amount);
+                    }
+                    catch (OverdraftException ode){
+                        System.out.println( customer + " withdraw " + amount + ", " + ode.getMessage() + ": " + ode.getDeficit());
+                    }
+                    break;
+                case 'd':
+                case 'D':
+                    customer = bank.getCustomer(customerIndex);
+                    customer.getAccount(accountIndex).deposit(amount);
+                    break;
+            }
+        }
+        // Generate a report
+        CustomerReport cr = new CustomerReport();
+        cr.generateReport();
+    }
+}
+/* PRESET CODE END - NEVER TOUCH CODE ABOVE */
+class Bank{
+    public List<Customer> customers;
+    private static Bank bank;
+    private Bank(){
+    }
+    static public Bank getBank(){
+        if(bank==null){
+            bank=new Bank();
+            bank.customers=new ArrayList<Customer>();
+        }
+        return bank;
+    }
+    public void addCustomer(String firstName, String lastName){
+        customers.add(new Customer(firstName,lastName));
+    }
+    public Customer getCustomer(int index){
+        return customers.get(index);
+    }
+    public int getNumOfCustomers(){
+        return customers.size();
+    }
+    public void sortCustomers(){
+        Collections.sort(customers);
+    }
+}
+class CustomerReport {
+    public void generateReport() {
+        Bank bank = Bank.getBank();
+        Customer customer;
+        bank.sortCustomers();
+        System.out.println("CUSTOMERS REPORT");
+        System.out.println("================");
+        for (int cust_idx = 0; cust_idx < bank.getNumOfCustomers(); cust_idx++) {
+            customer = bank.getCustomer(cust_idx);
+            System.out.println();
+            System.out.println("Customer: "
+                    + "["+customer.getFirstName() + " "
+                    + customer.getLastName()+"]");
+            for (int acct_idx = 0; acct_idx < customer.getNumOfAccounts(); acct_idx++) {
+                Account account = customer.getAccount(acct_idx);
+                String account_type = "";
+                if (account instanceof SavingsAccount) {
+                    account_type = "Savings Account";
+                } else if (account instanceof CheckingAccount) {
+                    account_type = "Checking Account";
+                } else {
+                    account_type = "Unknown Account Type";
+                }
+                System.out.println("    " + account_type + ": current balance is $"
+                        + account.getBalance());
+            }
+        }
+    }
+}
+class Customer implements Comparable<Customer>{
+    private String firstName;
+    private String lastName;
+    private List<Account> accounts;
+    public Customer(String firstName, String lastName)
+    {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        accounts=new ArrayList<>();
+    }
+    public String getFirstName()
+    {
+        return firstName;
+    }
+    public String getLastName()
+    {
+        return lastName;
+    }
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+    public Account getAccount(int index) {
+        if (index < accounts.size()) {
+            return accounts.get(index);
+        } else {
+            return null;
+        }
+    }
+    public int getNumOfAccounts() {
+        return accounts.size();
+    }
+    @Override
+    public String toString() {
+        return "[" + firstName + " " + lastName + "]";
+    }
+    @Override
+    public int compareTo(Customer other){
+        int Biglastname=this.getLastName().compareTo(other.getLastName());
+        if(Biglastname!=0){
+            return Biglastname;
+        }
+        else{
+            return this.getFirstName().compareTo(other.getFirstName());
+        }
+    }
+}
+class Account {
+    protected double balance;
+    public Account(double balance) {
+        this.balance = balance;
+    }
+    public double getBalance()
+    {
+        return balance;
+    }
+    public boolean deposit(double amount)
+    {
+        balance += amount;
+        return true;
+    }
+    public void withdraw(double amount) throws OverdraftException{
+        if (balance >= amount) {
+            balance -= amount;
+        }
+        else{
+            double deficit=amount-balance;
+            throw new OverdraftException("Insufficient funds", deficit);
+        }
+    }
+}
+class SavingsAccount extends Account{
+    private double interestRate;
+    public SavingsAccount(double balance,double interest_rate) {
+        super(balance);
+        this.interestRate = interest_rate;
+    }
+}
+class CheckingAccount extends Account {
+    private double overdraftProtection=0;
+    protected SavingsAccount protectedBy = null;
+    public CheckingAccount(double balance) {
+        super(balance);
+    }
+    public CheckingAccount(double balance, SavingsAccount savingsAccount) {
+        super(balance);
+        this.protectedBy = savingsAccount;
+    }
+    public CheckingAccount(double balance, double protect) {
+        super(balance);
+        overdraftProtection = protect;
+    }
+    @Override
+    public void withdraw(double amount) throws OverdraftException{
+        if (balance >= amount) {
+            balance -= amount;
+        } else if (overdraftProtection != 0) {
+            if (overdraftProtection >= (amount - balance)) {
+                overdraftProtection-=amount-balance;
+                balance = 0;
+            }
+            else{
+                double deficit=amount-balance-overdraftProtection;
+                throw new OverdraftException("Insufficient funds", deficit);
+            }
+        } else {
+            double deficit=amount-balance;
+            throw new OverdraftException("No overdraft protection", deficit);
+        }
+    }
+}
+class OverdraftException extends Exception {
+    private double deficit;
+    public OverdraftException(String message, double deficit) {
+        super(message);
+        this.deficit = deficit;
+    }
+    public double getDeficit() {
+        return deficit;
+    }
+}
