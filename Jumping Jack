@@ -1,0 +1,21 @@
+import java.util.Scanner;
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int T = sc.nextInt();
+        while (T-- > 0) {
+            int x = sc.nextInt();
+            System.out.println(minJumps(x));
+        }
+    }
+    public static int minJumps(int x) {
+        x = Math.abs(x); 
+        int sum = 0;
+        int jumps = 0;
+        while (sum < x || (sum - x) % 2 != 0) {
+            jumps++;
+            sum += jumps;
+        }
+        return jumps;
+    }
+}
