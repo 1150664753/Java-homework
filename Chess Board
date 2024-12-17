@@ -1,0 +1,33 @@
+import java.util.Scanner;
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String[] pan= new String[8];
+        for(int i=0;i<8;i++){
+            pan[i]=sc.nextLine();
+        }
+        int hangct=0,liect=0;
+        for(int i=0;i<8;i++){
+            if(pan[i].equals("BBBBBBBB")){
+                hangct++;
+            }
+        }
+        if(hangct==8){
+            System.out.println(hangct);
+        }else{
+            for(int i=0;i<8;i++){
+                int flag=1;
+                for(int j=0;j<8;j++){
+                    if(pan[j].charAt(i)=='W'){
+                        flag=0;
+                        break;
+                    }
+                }
+                if(flag==1){
+                    liect++;
+                }
+            }
+            System.out.println(liect+hangct);
+        }
+    }
+}
